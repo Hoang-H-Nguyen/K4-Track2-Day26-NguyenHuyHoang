@@ -39,6 +39,7 @@ import json
 import random
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -455,9 +456,14 @@ def main(argv=None) -> int:
             print("     ⚠ you went NEGATIVE — a disciplined round is ~9 cr against a 100 pool")
 
     if a.ui:
-        run_dir = HERE / "runs" / f"spar-{a.bot}-{a.seed}"
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
+        run_dir = HERE / "runs" / f"spar-{a.bot}-{a.role}-{a.seed}-{stamp}"
         run_dir.mkdir(parents=True, exist_ok=True)
-        (run_dir / "summary.json").write_text(json.dumps(log, indent=1), encoding="utf8")
+        summary = {"bot": a.bot, "role": a.role, "seed": a.seed,
+                   "rounds": a.rounds, "result": "draw" if hp_you == hp_bot else
+                   ("you" if hp_you > hp_bot else "bot"),
+                   "hp_you": hp_you, "hp_bot": hp_bot, "round_log": log}
+        (run_dir / "summary.json").write_text(json.dumps(summary, indent=1), encoding="utf8")
 
         # A REAL event log, not just a summary. The UI is a pure function of this file
         # (CONTRACTS.md 10), so writing only a summary would have produced a server that
